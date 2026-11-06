@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090909">
+<title>EARTHLINK PRO | Subscriber Command Center</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+:root{
+ --bg:#08090b;
+ --panel:rgba(21,22,25,.78);
+ --panel2:rgba(255,255,255,.035);
+ --gold:#d8b46a;
+ --gold2:#f5dfa4;
+ --text:#f5f2eb;
+ --muted:#99999d;
+ --border:rgba(216,180,106,.19);
+ --green:#3edc91;
+ --red:#ff626f;
+ --shadow:0 24px 70px rgba(0,0,0,.42);
+ --radius:23px;
+ --sidebar:275px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+ margin:0;min-height:100vh;color:var(--text);
+ background:
+ radial-gradient(ellipse at 12% 8%,rgba(171,127,48,.13),transparent 35%),
+ radial-gradient(ellipse at 90% 85%,rgba(87,61,137,.13),transparent 34%),
+ var(--bg);
+ font-family:'Cairo',sans-serif;overflow-x:hidden;
+}
+body.light{
+ --bg:#e9e8e4;--panel:rgba(255,255,255,.82);
+ --panel2:rgba(0,0,0,.035);--text:#171717;--muted:#666;
+ --border:rgba(153,116,43,.25);--shadow:0 20px 55px rgba(0,0,0,.1);
+}
+*::selection{background:rgba(216,180,106,.25);color:inherit}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{
+ outline:2px solid var(--gold);outline-offset:3px
+}
+a{color:inherit;text-decoration:none}
+.app{min-height:100vh}
+.ambient{
+ position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden
+}
+.orb{
+ position:absolute;width:330px;height:330px;border-radius:50%;
+ filter:blur(95px);opacity:.13;animation:float 13s ease-in-out infinite alternate
+}
+.orb.one{background:#d4a64e;top:5%;right:20%}
+.orb.two{background:#6847a8;bottom:5%;left:4%;animation-delay:-5s}
+.orb.three{background:#167f72;width:230px;height:230px;top:55%;right:60%;animation-delay:-8s}
+@keyframes float{to{transform:translate(55px,-45px) scale(1.18)}}
+.noise{
+ position:fixed;inset:0;pointer-events:none;opacity:.025;z-index:10;
+ background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")
+}
+.layout{display:flex;min-height:100vh}
+.sidebar{
+ width:var(--sidebar);position:fixed;right:0;top:0;bottom:0;z-index:30;
+ padding:24px 17px;background:var(--panel);
+ border-left:1px solid var(--border);backdrop-filter:blur(25px);
+ display:flex;flex-direction:column;transition:.35s ease;
+}
+.brand{display:flex;align-items:center;gap:13px;padding:8px 10px 27px}
+.brand-mark{
+ width:48px;height:48px;border-radius:16px;display:grid;place-items:center;
+ color:#17130a;font-size:21px;
+ background:linear-gradient(145deg,#f5dfa4,#a8792c);
+ box-shadow:0 8px 30px rgba(216,180,106,.22);
+ transform:rotate(-5deg)
+}
+.brand-name{font:900 18px 'Inter',sans-serif;letter-spacing:1.1px}
+.brand-sub{font:600 9px 'Inter',sans-serif;color:var(--gold);letter-spacing:1.5px;margin-top:5px}
+.nav-caption{font-size:10px;color:var(--muted);padding:12px 13px 8px;letter-spacing:1px}
+.nav-list{display:grid;gap:5px}
+.nav-item{
+ width:100%;border:1px solid transparent;background:transparent;color:var(--muted);
+ display:flex;align-items:center;gap:13px;padding:12px 14px;border-radius:14px;
+ text-align:right;transition:.25s;font-size:13px;font-weight:700
+}
+.nav-item i{width:19px;text-align:center;font-size:15px}
+.nav-item:hover{color:var(--text);background:var(--panel2);transform:translateX(-3px)}
+.nav-item.active{
+ color:var(--gold2);border-color:var(--border);
+ background:linear-gradient(110deg,rgba(216,180,106,.14),rgba(216,180,106,.035));
+ box-shadow:inset -3px 0 var(--gold)
+}
+.sidebar-bottom{margin-top:auto}
+.connection-mini{
+ padding:14px;border:1px solid var(--border);border-radius:17px;
+ background:var(--panel2);margin-bottom:12px
+}
+.connection-title{font-size:11px;color:var(--muted);margin-bottom:9px}
+.connection-state{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:800}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.online{background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 1.7s infinite}
+.dot.offline{background:var(--red);box-shadow:0 0 10px var(--red)}
+@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}
+.main{
+ width:calc(100% - var(--sidebar));margin-right:var(--sidebar);
+ min-width:0;padding:25px 30px 50px;transition:.35s
+}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:28px}
+.top-left,.top-actions{display:flex;align-items:center;gap:12px}
+.menu-toggle{
+ display:none;width:43px;height:43px;border:1px solid var(--border);
+ border-radius:13px;background:var(--panel);color:var(--gold)
+}
+.page-heading{font-size:19px;font-weight:900}
+.page-subtitle{font-size:11px;color:var(--muted);margin-top:2px}
+.icon-btn{
+ width:43px;height:43px;border:1px solid var(--border);border-radius:14px;
+ background:var(--panel);color:var(--gold);transition:.25s;position:relative
+}
+.icon-btn:hover{transform:translateY(-3px) rotate(-4deg);box-shadow:0 8px 25px rgba(216,180,106,.12)}
+.avatar{
+ width:42px;height:42px;border-radius:50%;border:2px solid var(--gold);
+ display:grid;place-items:center;background:linear-gradient(145deg,#55442a,#171717);
+ color:var(--gold2);font-size:16px;overflow:hidden
+}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.content-section{display:none;animation:appear .4s ease}
+.content-section.active{display:block}
+@keyframes appear{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:15px;margin-bottom:20px}
+.section-title{font-size:21px;font-weight:900}
+.section-desc{font-size:11px;color:var(--muted);margin-top:3px}
+.glass{
+ background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+ backdrop-filter:blur(22px);box-shadow:var(--shadow);
+}
+.hero{
+ position:relative;overflow:hidden;padding:25px 27px;margin-bottom:20px;
+ background:linear-gradient(115deg,rgba(216,180,106,.13),rgba(255,255,255,.018) 48%,rgba(100,76,140,.09));
+}
+.hero:after{
+ content:"";position:absolute;width:260px;height:260px;border:1px solid rgba(216,180,106,.13);
+ border-radius:50%;left:-70px;top:-110px;box-shadow:0 0 0 25px rgba(216,180,106,.025),0 0 0 55px rgba(216,180,106,.02)
+}
+.hero-content{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.eyebrow{font:700 10px 'Inter',sans-serif;letter-spacing:2px;color:var(--gold)}
+.hero h1{font-size:clamp(21px,3vw,30px);margin:9px 0 4px;font-weight:900}
+.hero p{margin:0;color:var(--muted);font-size:12px}
+.hero-user{display:flex;align-items:center;gap:13px}
+.hero-avatar{
+ width:62px;height:62px;border-radius:20px;border:1px solid var(--gold);
+ display:grid;place-items:center;font-size:23px;color:var(--gold2);
+ background:linear-gradient(145deg,rgba(216,180,106,.23),rgba(255,255,255,.03));
+ box-shadow:inset 0 0 20px rgba(216,180,106,.12),0 12px 28px rgba(0,0,0,.2)
+}
+.hero-status{
+ display:inline-flex;align-items:center;gap:7px;padding:6px 11px;
+ border:1px solid var(--border);border-radius:30px;font-size:10px;font-weight:800
+}
+.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.stat-card{padding:18px;min-height:125px;position:relative;overflow:hidden;transition:.3s}
+.stat-card:hover{transform:translateY(-5px);border-color:rgba(216,180,106,.45)}
+.stat-top{display:flex;justify-content:space-between;align-items:center}
+.stat-icon{
+ width:38px;height:38px;border-radius:13px;display:grid;place-items:center;
+ color:var(--gold);background:rgba(216,180,106,.1);border:1px solid var(--border)
+}
+.stat-label{font-size:11px;color:var(--muted)}
+.stat-value{font:800 23px 'Inter','Cairo',sans-serif;margin-top:13px;direction:ltr;text-align:right}
+.stat-unit{font:600 10px 'Cairo',sans-serif;color:var(--muted);margin-right:5px}
+.stat-note{font-size:10px;color:var(--muted);margin-top:5px}
+.dashboard-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:15px;margin-bottom:20px}
+.card{padding:20px}
+.card-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px}
+.card-title{font-size:13px;font-weight:900}
+.card-kicker{font-size:10px;color:var(--muted)}
+.expiry-layout{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.ring-wrap{width:150px;height:150px;position:relative;flex-shrink:0}
+.ring{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:rgba(160,160,160,.13);stroke-width:9}
+.ring-progress{
+ fill:none;stroke:url(#goldGradient);stroke-width:9;stroke-linecap:round;
+ stroke-dasharray:440;stroke-dashoffset:440;transition:stroke-dashoffset 1.2s ease
+}
+.ring-center{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.ring-number{font:900 35px 'Inter',sans-serif;color:var(--gold2)}
+.ring-caption{font-size:10px;color:var(--muted)}
+.expiry-details{flex:1;min-width:160px}
+.detail-line{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:11px}
+.detail-line:last-child{border:0}
+.detail-line span:first-child{color:var(--muted)}
+.detail-line strong{font-weight:800;overflow-wrap:anywhere}
+.status-pill{padding:5px 10px;border-radius:30px;font-size:10px;font-weight:800}
+.status-pill.online{color:var(--green);background:rgba(62,220,145,.1)}
+.status-pill.offline{color:var(--red);background:rgba(255,98,111,.1)}
+.status-pill.unknown{color:var(--muted);background:var(--panel2)}
+.data-placeholder{
+ min-height:145px;display:grid;place-content:center;text-align:center;
+ color:var(--muted);gap:8px;font-size:11px
+}
+.data-placeholder i{font-size:23px;color:var(--gold);opacity:.8}
+.info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.info-tile{padding:15px;border:1px solid var(--border);border-radius:16px;background:var(--panel2);min-width:0}
+.info-tile span{display:block;font-size:10px;color:var(--muted);margin-bottom:7px}
+.info-tile strong{font-size:12px;overflow-wrap:anywhere}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap}
+.action-btn{
+ border:1px solid var(--border);border-radius:12px;padding:9px 14px;
+ color:var(--gold2);background:rgba(216,180,106,.08);font-size:11px;font-weight:800;
+ transition:.2s
+}
+.action-btn:hover{background:rgba(216,180,106,.18);transform:translateY(-2px)}
+.action-btn.primary{background:linear-gradient(135deg,#e7c77f,#a77b35);color:#17120a;border:0}
+.action-btn.danger{color:var(--red);border-color:rgba(255,98,111,.25)}
+.field{display:grid;gap:7px;margin-bottom:15px}
+.field label{font-size:11px;color:var(--muted);font-weight:700}
+.field input,.field textarea,.field select{
+ width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:13px;
+ background:var(--panel2);color:var(--text);outline:none;font-size:12px
+}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--gold)}
+.field textarea{min-height:110px;resize:vertical}
+.form-card{max-width:600px;padding:23px}
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:15px}
+.data-table{width:100%;border-collapse:collapse;min-width:520px;font-size:11px}
+.data-table th,.data-table td{padding:13px;text-align:right;border-bottom:1px solid var(--border)}
+.data-table th{color:var(--gold);background:var(--panel2)}
+.data-table tr:last-child td{border-bottom:0}
+.empty-row{text-align:center!important;color:var(--muted);padding:28px!important}
+.theme-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.theme-option{
+ min-height:105px;border:1px solid var(--border);border-radius:16px;
+ padding:12px;background:var(--panel2);color:var(--text);text-align:right;transition:.2s
+}
+.theme-option:hover,.theme-option.selected{border-color:var(--gold);transform:translateY(-3px)}
+.theme-preview{height:43px;border-radius:10px;margin-bottom:9px;border:1px solid rgba(255,255,255,.15)}
+.toast-host{position:fixed;left:20px;bottom:20px;z-index:100;display:grid;gap:9px}
+.toast{
+ min-width:240px;max-width:min(360px,calc(100vw - 40px));padding:13px 16px;
+ border-radius:14px;background:#171719;color:#fff;border:1px solid rgba(216,180,106,.3);
+ box-shadow:0 15px 45px rgba(0,0,0,.4);font-size:12px;
+ animation:toastIn .3s ease
+}
+.toast.error{border-color:rgba(255,98,111,.5)}
+.toast.success{border-color:rgba(62,220,145,.5)}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.modal-backdrop{
+ display:none;position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.7);
+ backdrop-filter:blur(9px);padding:20px;place-items:center
+}
+.modal-backdrop.show{display:grid}
+.modal{width:min(440px,100%);padding:23px}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-head h3{font-size:15px;margin:0}
+.close-modal{border:0;background:transparent;color:var(--muted);font-size:20px}
+.login-screen{
+ min-height:100vh;display:grid;place-items:center;padding:22px;
+ background:radial-gradient(ellipse at 50% 0,rgba(216,180,106,.14),transparent 45%),var(--bg)
+}
+.login-card{
+ width:min(440px,100%);padding:30px;border:1px solid var(--border);
+ border-radius:27px;background:var(--panel);backdrop-filter:blur(25px);
+ box-shadow:0 30px 90px rgba(0,0,0,.5);position:relative;overflow:hidden
+}
+.login-card:before{
+ content:"";position:absolute;top:-110px;left:-100px;width:220px;height:220px;
+ border:1px solid rgba(216,180,106,.18);border-radius:50%;
+ box-shadow:0 0 0 20px rgba(216,180,106,.025),0 0 0 45px rgba(216,180,106,.02)
+}
+.login-brand{text-align:center;position:relative;margin-bottom:25px}
+.login-brand .brand-mark{margin:auto;width:65px;height:65px;font-size:26px}
+.login-brand h1{font:900 22px 'Inter',sans-serif;letter-spacing:1.3px;margin:17px 0 5px}
+.login-brand p{font:600 9px 'Inter',sans-serif;letter-spacing:2px;color:var(--gold)}
+.login-hint{font-size:10px;color:var(--muted);text-align:center;margin-top:15px;line-height:1.8}
+.login-error{font-size:11px;color:var(--red);min-height:18px;margin-bottom:7px}
+.loading{opacity:.65;pointer-events:none}
+.hidden{display:none!important}
+.mobile-overlay{display:none}
+@media(max-width:1100px){
+ .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dashboard-grid{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+ .sidebar{transform:translateX(105%);width:min(290px,85vw)}
+ .sidebar.open{transform:translateX(0)}
+ .main{width:100%;margin-right:0;padding:18px 14px 35px}
+ .menu-toggle{display:grid;place-items:center}
+ .mobile-overlay.show{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:25}
+ .topbar{margin-bottom:20px}
+ .hero{padding:20px 17px}
+ .hero-content{align-items:flex-start;flex-direction:column}
+ .hero-user{order:-1}
+ .stats-grid{gap:10px}
+ .stat-card{padding:14px;min-height:115px}
+ .stat-value{font-size:19px}
+ .info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .theme-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .section-title{font-size:18px}
+}
+@media(max-width:380px){
+ .stats-grid{grid-template-columns:1fr 1fr}
+ .info-grid{grid-template-columns:1fr}
+ .expiry-layout{justify-content:center}
+}
+</style>
+</head>
+
+<body>
+<div class="ambient">
+ <div class="orb one"></div><div class="orb two"></div><div class="orb three"></div>
+</div>
+<div class="noise"></div>
+
+<!-- شاشة تسجيل الدخول -->
+<section id="loginScreen" class="login-screen">
+ <div class="login-card">
+  <div class="login-brand">
+   <div class="brand-mark"><i class="fa-solid fa-satellite-dish"></i></div>
+   <h1>EARTHLINK PRO</h1>
+   <p>SUBSCRIBER COMMAND CENTER</p>
+  </div>
+
+  <form id="loginForm">
+   <div class="field">
+    <label for="username">USERNAME / اسم المستخدم</label>
+    <input id="username" name="username" autocomplete="username"
+     placeholder="أدخل اسم مستخدم Earthlink" required>
+   </div>
+   <div class="field">
+    <label for="password">PASSWORD / كلمة المرور</label>
+    <div style="position:relative">
+     <input id="password" name="password" type="password"
+      autocomplete="current-password" placeholder="أدخل كلمة المرور"
+      required style="padding-left:45px">
+     <button type="button" id="togglePassword"
+      style="position:absolute;left:12px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted)">
+      <i class="fa-regular fa-eye"></i>
+     </button>
+    </div>
+   </div>
+   <div id="loginError" class="login-error" role="alert"></div>
+   <button class="action-btn primary" id="loginButton" type="submit"
+    style="width:100%;padding:14px">
+    <i class="fa-solid fa-right-to-bracket"></i>
+    &nbsp; LOGIN TO EARTHLINK
+   </button>
+  </form>
+  <p class="login-hint">
+   اتصال مباشر بخدمة المشتركين عبر الخادم الآمن.<br>
+   لا تُحفظ كلمة المرور داخل المتصفح.
+  </p>
+ </div>
+</section>
+
+<!-- التطبيق -->
+<div id="appScreen" class="app hidden">
+ <div class="mobile-overlay" id="mobileOverlay"></div>
+ <div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+   <div class="brand">
+    <div class="brand-mark"><i class="fa-solid fa-satellite-dish"></i></div>
+    <div>
+     <div class="brand-name">EARTHLINK PRO</div>
+     <div class="brand-sub">SUBSCRIBER CENTER</div>
+    </div>
+   </div>
+
+   <div class="nav-caption">MAIN WORKSPACE</div>
+   <nav class="nav-list">
+    <button class="nav-item active" data-page="home"><i class="fa-solid fa-grid-2"></i> الرئيسية</button>
+    <button class="nav-item" data-page="account"><i class="fa-regular fa-user"></i> حسابي</button>
+    <button class="nav-item" data-page="subscription"><i class="fa-solid fa-id-card"></i> بيانات الاشتراك</button>
+    <button class="nav-item" data-page="usage"><i class="fa-solid fa-chart-line"></i> استهلاك البيانات</button>
+    <button class="nav-item" data-page="history"><i class="fa-solid fa-clock-rotate-left"></i> سجل التحديثات</button>
+   </nav>
+
+   <div class="nav-caption">PERSONAL CENTER</div>
+   <nav class="nav-list">
+    <button class="nav-item" data-page="notifications"><i class="fa-regular fa-bell"></i> الإشعارات</button>
+    <button class="nav-item" data-page="settings"><i class="fa-solid fa-sliders"></i> الإعدادات</button>
+    <button class="nav-item" data-page="themes"><i class="fa-solid fa-palette"></i> الثيمات والخلفيات</button>
+    <button class="nav-item" data-page="contact"><i class="fa-regular fa-paper-plane"></i> التواصل والدعم</button>
+    <button class="nav-item" data-page="about"><i class="fa-solid fa-circle-info"></i> حول التطبيق</button>
+   </nav>
+
+   <div class="sidebar-bottom">
+    <div class="connection-mini">
+     <div class="connection-title">EARTHLINK CONNECTION</div>
+     <div class="connection-state">
+      <span id="sideDot" class="dot"></span>
+      <span id="sideConnection">بانتظار تسجيل الدخول</span>
+     </div>
+    </div>
+    <button class="nav-item" id="logoutButton">
+     <i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل الخروج
+    </button>
+   </div>
+  </aside>
+
+  <main class="main">
+   <header class="topbar">
+    <div class="top-left">
+     <button class="menu-toggle" id="menuToggle"><i class="fa-solid fa-bars"></i></button>
+     <div>
+      <div class="page-heading" id="topTitle">لوحة التحكم</div>
+      <div class="page-subtitle" id="topSubtitle">مركز إدارة حساب Earthlink</div>
+     </div>
+    </div>
+    <div class="top-actions">
+     <button class="icon-btn" id="refreshButton" title="تحديث البيانات">
+      <i class="fa-solid fa-rotate"></i>
+     </button>
+     <button class="icon-btn" id="themeToggle" title="تبديل المظهر">
+      <i class="fa-regular fa-moon"></i>
+     </button>
+     <button class="icon-btn" id="notificationButton" title="الإشعارات">
+      <i class="fa-regular fa-bell"></i>
+     </button>
+     <div class="avatar" id="topAvatar"><i class="fa-solid fa-user"></i></div>
+    </div>
+   </header>
+
+   <!-- الرئيسية -->
+   <section class="content-section active" id="page-home">
+    <div class="hero glass">
+     <div class="hero-content">
+      <div>
+       <div class="eyebrow">WELCOME TO YOUR COMMAND CENTER</div>
+       <h1>مرحباً، <span id="welcomeName">المشترك</span></h1>
+       <p>كل تفاصيل اشتراكك في مكان واحد، بتحديثات مرتبطة ببيانات حسابك.</p>
+      </div>
+      <div class="hero-user">
+       <div class="hero-avatar" id="heroAvatar"><i class="fa-solid fa-user-astronaut"></i></div>
+       <div>
+        <div class="hero-status"><span id="heroDot" class="dot"></span><span id="heroStatus">غير متصل</span></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px" id="lastUpdate">لم يتم التحديث بعد</div>
+       </div>
+      </div>
+     </div>
+    </div>
+
+    <div class="stats-grid">
+     <article class="stat-card glass">
+      <div class="stat-top"><span class="stat-label">نوع الاشتراك</span><span class="stat-icon"><i class="fa-solid fa-crown"></i></span></div>
+      <div class="stat-value" id="statPlan">—</div>
+      <div class="stat-note">حسب بيانات Earthlink</div>
+     </article>
+     <article class="stat-card glass">
+      <div class="stat-top"><span class="stat-label">سعر الاشتراك</span><span class="stat-icon"><i class="fa-solid fa-coins"></i></span></div>
+      <div class="stat-value" id="statPrice">—</div>
+      <div class="stat-note">قيمة الاشتراك المسجلة</div>
+     </article>
+     <article class="stat-card glass">
+      <div class="stat-top"><span class="stat-label">الأيام المتبقية</span><span class="stat-icon"><i class="fa-regular fa-calendar-check"></i></span></div>
+      <div class="stat-value" id="statDays">—</div>
+      <div class="stat-note">حتى تاريخ الانتهاء</div>
+     </article>
+     <article class="stat-card glass">
+      <div class="stat-top"><span class="stat-label">حالة الحساب</span><span class="stat-icon"><i class="fa-solid fa-shield-halved"></i></span></div>
+      <div class="stat-value" id="statStatus" style="font-size:17px">—</div>
+      <div class="stat-note">الحالة الفعلية من الخادم</div>
+     </article>
+    </div>
+
+    <div class="dashboard-grid">
+     <article class="glass card">
+      <div class="card-heading">
+       <div><div class="card-title">مدة الاشتراك</div><div class="card-kicker">SUBSCRIPTION LIFECYCLE</div></div>
+       <i class="fa-solid fa-chart-pie" style="color:var(--gold)"></i>
+      </div>
+      <div class="expiry-layout">
+       <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 160 160">
+         <defs>
+          <linearGradient id="goldGradient"><stop offset="0%" stop-color="#a8792c"/><stop offset="100%" stop-color="#f5dfa4"/></linearGradient>
+         </defs>
+         <circle class="ring-bg" cx="80" cy="80" r="70"/>
+         <circle class="ring-progress" id="expiryRing" cx="80" cy="80" r="70"/>
+        </svg>
+        <div class="ring-center">
+         <div class="ring-number" id="ringDays">—</div>
+         <div class="ring-caption">يوم متبقٍ</div>
+        </div>
+       </div>
+       <div class="expiry-details">
+        <div class="detail-line"><span>تاريخ الانتهاء</span><strong id="expiryDate">—</strong></div>
+        <div class="detail-line"><span>حالة الخدمة</span><strong id="serviceStatus">—</strong></div>
+        <div class="detail-line"><span>اسم المستخدم</span><strong id="accountUsername">—</strong></div>
+        <div class="detail-line"><span>آخر تحديث</span><strong id="updateClock">—</strong></div>
+       </div>
+      </div>
+     </article>
+
+     <article class="glass card">
+      <div class="card-heading">
+       <div><div class="card-title">الاتصال والاستهلاك</div><div class="card-kicker">LIVE NETWORK OVERVIEW</div></div>
+       <i class="fa-solid fa-wifi" style="color:var(--gold)"></i>
+      </div>
+      <div class="info-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+       <div class="info-tile"><span>حالة الاتصال</span><strong id="networkStatus">—</strong></div>
+       <div class="info-tile"><span>عنوان IP</span><strong id="networkIP">—</strong></div>
+       <div class="info-tile"><span>سرعة الاتصال</span><strong id="networkSpeed">غير متوفر</strong></div>
+       <div class="info-tile"><span>استهلاك البيانات</span><strong id="networkUsage">غير متوفر</strong></div>
+      </div>
+      <div class="card-kicker" style="margin-top:15px">تظهر السرعة والاستهلاك فقط إذا وفّرتهما واجهة Earthlink.</div>
+     </article>
+    </div>
+
+    <article class="glass card">
+     <div class="card-heading">
+      <div><div class="card-title">ملخص بيانات الحساب</div><div class="card-kicker">ACCOUNT SNAPSHOT</div></div>
+      <button class="action-btn" data-go="account">عرض الحساب <i class="fa-solid fa-arrow-left"></i></button>
+     </div>
+     <div class="info-grid">
+      <div class="info-tile"><span>الاسم الكامل</span><strong id="quickFullName">—</strong></div>
+      <div class="info-tile"><span>رقم المستخدم</span><strong id="quickUserID">—</strong></div>
+      <div class="info-tile"><span>الوكيل</span><strong id="quickAgent">—</strong></div>
+     </div>
+    </article>
+   </section>
+
+   <!-- حسابي -->
+   <section class="content-section" id="page-account">
+    <div class="section-head"><div><div class="section-title">حسابي</div><div class="section-desc">تفاصيل الملف الشخصي والبيانات المرتبطة بحسابك</div></div></div>
+    <article class="glass card">
+     <div class="card-heading"><div class="card-title">الملف الشخصي</div><i class="fa-regular fa-id-badge" style="color:var(--gold)"></i></div>
+     <div class="info-grid" id="accountInfoGrid">
+      <div class="info-tile"><span>اسم المستخدم</span><strong id="accUsername">—</strong></div>
+      <div class="info-tile"><span>الاسم الكامل</span><strong id="accFullName">—</strong></div>
+      <div class="info-tile"><span>رقم المستخدم</span><strong id="accUserID">—</strong></div>
+      <div class="info-tile"><span>الوكيل</span><strong id="accAgent">—</strong></div>
+      <div class="info-tile"><span>رقم الهاتف</span><strong id="accPhone">—</strong></div>
+      <div class="info-tile"><span>البريد الإلكتروني</span><strong id="accEmail">—</strong></div>
+      <div class="info-tile"><span>المدينة</span><strong id="accCity">—</strong></div>
+      <div class="info-tile"><span>العنوان</span><strong id="accAddress">—</strong></div>
+      <div class="info-tile"><span>عنوان IP</span><strong id="accIP">—</strong></div>
+     </div>
+    </article>
+   </section>
+
+   <!-- الاشتراك -->
+   <section class="content-section" id="page-subscription">
+    <div class="section-head"><div><div class="section-title">بيانات الاشتراك</div><div class="section-desc">معلومات الباقة والسعر والصلاحية</div></div></div>
+    <article class="glass card">
+     <div class="info-grid">
+      <div class="info-tile"><span>نوع الاشتراك</span><strong id="subPlan">—</strong></div>
+      <div class="info-tile"><span>السعر</span><strong id="subPrice">—</strong></div>
+      <div class="info-tile"><span>حالة الحساب</span><strong id="subStatus">—</strong></div>
+      <div class="info-tile"><span>تاريخ الانتهاء</span><strong id="subExpiry">—</strong></div>
+      <div class="info-tile"><span>الأيام المتبقية</span><strong id="subDays">—</strong></div>
+      <div class="info-tile"><span>حالة الخدمة</span><strong id="subService">—</strong></div>
+     </div>
+    </article>
+   </section>
+
+   <!-- الاستهلاك -->
+   <section class="content-section" id="page-usage">
+    <div class="section-head"><div><div class="section-title">استهلاك البيانات</div><div class="section-desc">عرض معلومات الاستخدام التي يوفرها مصدر البيانات</div></div></div>
+    <article class="glass card">
+     <div class="card-heading"><div class="card-title">مؤشرات الاستخدام</div><i class="fa-solid fa-chart-column" style="color:var(--gold)"></i></div>
+     <div class="info-grid">
+      <div class="info-tile"><span>الاستهلاك الكلي</span><strong id="usageTotal">غير متوفر من API</strong></div>
+      <div class="info-tile"><span>التحميل</span><strong id="usageDownload">غير متوفر من API</strong></div>
+      <div class="info-tile"><span>الرفع</span><strong id="usageUpload">غير متوفر من API</strong></div>
+      <div class="info-tile"><span>السرعة الحالية</span><strong id="usageSpeed">غير متوفر من API</strong></div>
+      <div class="info-tile"><span>التردد</span><strong id="usageFrequency">غير متوفر من API</strong></div>
+      <div class="info-tile"><span>عنوان IP</span><strong id="usageIP">—</strong></div>
+     </div>
+     <div class="data-placeholder"><i class="fa-solid fa-database"></i><span id="usageNotice">بانتظار بيانات الاستخدام من واجهة Earthlink.</span></div>
+    </article>
+   </section>
+
+   <!-- السجل -->
+   <section class="content-section" id="page-history">
+    <div class="section-head"><div><div class="section-title">سجل التحديثات</div><div class="section-desc">عمليات جلب البيانات والتغييرات خلال الجلسة الحالية</div></div>
+     <button class="action-btn" id="clearHistory">مسح السجل المحلي</button>
+    </div>
+    <article class="glass card">
+     <div class="table-wrap">
+      <table class="data-table">
+       <thead><tr><th>الوقت</th><th>العملية</th><th>النتيجة</th></tr></thead>
+       <tbody id="historyRows"><tr><td colspan="3" class="empty-row">لا توجد عمليات مسجلة بعد</td></tr></tbody>
+      </table>
+     </div>
+    </article>
+   </section>
+
+   <!-- الإشعارات -->
+   <section class="content-section" id="page-notifications">
+    <div class="section-head"><div><div class="section-title">الإشعارات</div><div class="section-desc">تنبيهات الحساب وسجل التنبيهات المحلية</div></div></div>
+    <article class="glass card">
+     <div class="card-heading"><div class="card-title">إعدادات التنبيه</div></div>
+     <div class="field"><label>إشعارات داخل الموقع</label>
+      <select id="inAppNotifications"><option value="on">مفعلة</option><option value="off">متوقفة</option></select>
+     </div>
+     <div class="field"><label>التنبيه قبل انتهاء الاشتراك بعدد الأيام</label>
+      <input id="expiryAlertDays" type="number" min="0" max="60" value="3">
+     </div>
+     <button class="action-btn primary" id="saveNotificationSettings">حفظ الإعدادات</button>
+    </article>
+    <article class="glass card" style="margin-top:15px">
+     <div class="card-heading"><div class="card-title">سجل الإشعارات</div></div>
+     <div id="notificationList" class="data-placeholder"><i class="fa-regular fa-bell"></i><span>لا توجد إشعارات حالياً</span></div>
+    </article>
+   </section>
+
+   <!-- الإعدادات -->
+   <section class="content-section" id="page-settings">
+    <div class="section-head"><div><div class="section-title">الإعدادات</div><div class="section-desc">اللغة والتحديثات والمظهر العام</div></div></div>
+    <article class="glass card">
+     <div class="field"><label>لغة الواجهة</label>
+      <select id="languageSelect"><option value="ar">العربية</option><option value="en">English</option></select>
+     </div>
+     <div class="field"><label>فترة تحديث البيانات أثناء فتح الموقع</label>
+      <select id="refreshInterval">
+       <option value="30000">كل 30 ثانية</option>
+       <option value="60000" selected>كل دقيقة</option>
+       <option value="180000">كل 3 دقائق</option>
+       <option value="300000">كل 5 دقائق</option>
+      </select>
+     </div>
+     <div class="field"><label>تنسيق الساعة</label>
+      <select id="clockFormat"><option value="12">12 ساعة</option><option value="24">24 ساعة</option></select>
+     </div>
+     <button class="action-btn primary" id="saveSettings">حفظ الإعدادات</button>
+    </article>
+   </section>
+
+   <!-- الثيمات -->
+   <section class="content-section" id="page-themes">
+    <div class="section-head"><div><div class="section-title">الثيمات والخلفيات</div><div class="section-desc">اختيار طابع الواجهة</div></div></div>
+    <div class="theme-grid">
+     <button class="theme-option selected" data-theme="gold"><div class="theme-preview" style="background:linear-gradient(120deg,#08090b,#b88c43)"></div>Black Gold</button>
+     <button class="theme-option" data-theme="purple"><div class="theme-preview" style="background:linear-gradient(120deg,#090817,#8954d7)"></div>Royal Purple</button>
+     <button class="theme-option" data-theme="cyan"><div class="theme-preview" style="background:linear-gradient(120deg,#071519,#27b8c5)"></div>Cyber Cyan</button>
+     <button class="theme-option" data-theme="green"><div class="theme-preview" style="background:linear-gradient(120deg,#07150e,#32b878)"></div>Emerald</button>
+     <button class="theme-option" data-theme="red"><div class="theme-preview" style="background:linear-gradient(120deg,#17090b,#d44a54)"></div>Ruby</button>
+     <button class="theme-option" data-theme="silver"><div class="theme-preview" style="background:linear-gradient(120deg,#111318,#aeb8c6)"></div>Silver</button>
+     <button class="theme-option" data-theme="blue"><div class="theme-preview" style="background:linear-gradient(120deg,#07101e,#397fd5)"></div>Deep Blue</button>
+     <button class="theme-option" data-theme="light"><div class="theme-preview" style="background:linear-gradient(120deg,#f1f1ed,#b99b5d)"></div>Premium Light</button>
+    </div>
+   </section>
+
+   <!-- التواصل -->
+   <section class="content-section" id="page-contact">
+    <div class="section-head"><div><div class="section-title">التواصل والدعم</div><div class="section-desc">إنشاء رسالة دعم برقم مرجعي ووقت إرسال</div></div></div>
+    <article class="glass card form-card">
+     <form id="contactForm">
+      <div class="field"><label>الاسم</label><input id="contactName" placeholder="اسم صاحب الطلب" required></div>
+      <div class="field"><label>نوع الطلب</label>
+       <select id="contactType"><option>مشكلة في الحساب</option><option>مشكلة اتصال</option><option>استفسار عن الاشتراك</option><option>اقتراح تطوير</option><option>أخرى</option></select>
+      </div>
+      <div class="field"><label>تفاصيل الرسالة</label><textarea id="contactMessage" placeholder="اكتب تفاصيل طلبك..." required></textarea></div>
+      <button class="action-btn primary" type="submit">إنشاء طلب الدعم <i class="fa-regular fa-paper-plane"></i></button>
+     </form>
+     <div id="contactResult" style="font-size:11px;color:var(--gold);margin-top:13px"></div>
+    </article>
+   </section>
+
+   <!-- حول -->
+   <section class="content-section" id="page-about">
+    <div class="section-head"><div><div class="section-title">حول EARTHLINK PRO</div><div class="section-desc">Subscriber Command Center</div></div></div>
+    <article class="glass card">
+     <div class="brand" style="padding:5px 0 20px">
+      <div class="brand-mark"><i class="fa-solid fa-satellite-dish"></i></div>
+      <div><div class="brand-name">EARTHLINK PRO</div><div class="brand-sub">VERSION 2.0.0</div></div>
+     </div>
+     <p style="font-size:12px;line-height:2;color:var(--muted)">
+      لوحة تحكم لإدارة بيانات اشتراك Earthlink، مصممة لعرض البيانات التي تصل من واجهة الخدمة الفعلية.
+      لا تمثل المؤشرات غير المتوفرة أرقاماً تقديرية، ولا يتم اختراع قيم بديلة عند فشل الاتصال.
+     </p>
+     <div class="info-grid">
+      <div class="info-tile"><span>الإصدار</span><strong>2.0.0-EARTHLINK</strong></div>
+      <div class="info-tile"><span>الواجهة</span><strong>Responsive Web</strong></div>
+      <div class="info-tile"><span>مصدر الحساب</span><strong>Earthlink API</strong></div>
+     </div>
+    </article>
+   </section>
+
+   <footer style="text-align:center;color:var(--muted);font:10px 'Inter';padding:25px 0 5px">
+    EARTHLINK PRO · SUBSCRIBER COMMAND CENTER
+   </footer>
+  </main>
+ </div>
+</div>
+
+<div class="toast-host" id="toastHost" aria-live="polite"></div>
+
+<div class="modal-backdrop" id="confirmModal">
+ <div class="modal glass">
+  <div class="modal-head"><h3 id="modalTitle">تأكيد العملية</h3><button class="close-modal" id="closeModal">×</button></div>
+  <p id="modalMessage" style="font-size:12px;color:var(--muted);line-height:1.9"></p>
+  <div class="toolbar" style="justify-content:flex-end;margin-top:20px">
+   <button class="action-btn" id="cancelModal">إلغاء</button>
+   <button class="action-btn primary" id="acceptModal">تأكيد</button>
+  </div>
+ </div>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   EARTHLINK PRO - FRONTEND APPLICATION CORE
+   API calls are routed through the secure backend.
+========================================================= */
+
+const CONFIG = Object.freeze({
+ API_BASE: "",
+ REFRESH_INTERVAL: 60000,
+ REQUEST_TIMEOUT: 20000,
+ HISTORY_LIMIT: 100
+});
+
+const state = {
+ user: null,
+ raw: null,
+ refreshTimer: null,
+ history: [],
+ notifications: [],
+ settings: {
+  refreshInterval: 60000,
+  clockFormat: "12",
+  language: "ar",
+  alertDays: 3,
+  inAppNotifications: "on"
+ },
+ currentPage: "home",
+ lastRefresh: null,
+ busy: false
+};
+
+const $ = id => document.getElementById(id);
+
+function safeText(value, fallback = "—") {
+ if (value === null || value === undefined || value === "") return fallback;
+ if (typeof value === "object") return fallback;
+ return String(value);
+}
+
+function setText(id, value, fallback = "—") {
+ const el = $(id);
+ if (el) el.textContent = safeText(value, fallback);
+}
+
+function toast(message, type = "info") {
+ const host = $("toastHost");
+ const node = document.createElement("div");
+ node.className = "toast " + (type === "error" ? "error" : type === "success" ? "success" : "");
+ node.textContent = message;
+ host.appendChild(node);
+ setTimeout(() => {
+  node.style.opacity = "0";
+  node.style.transform = "translateY(8px)";
+  setTimeout(() => node.remove(), 300);
+ }, 3500);
+}
+
+function logHistory(action, result) {
+ const item = {
+  time: new Date().toISOString(),
+  action: String(action),
+  result: String(result)
+ };
+ state.history.unshift(item);
+ state.history = state.history.slice(0, CONFIG.HISTORY_LIMIT);
+ renderHistory();
+}
+
+function formatDate(value) {
+ if (!value) return "—";
+ const date = new Date(value);
+ if (Number.isNaN(date.getTime())) return safeText(value);
+ return new Intl.DateTimeFormat(state.settings.language === "ar" ? "ar-IQ" : "en-GB", {
+  year:"numeric",month:"2-digit",day:"2-digit"
+ }).format(date);
+}
+
+function formatClock(date = new Date()) {
+ return new Intl.DateTimeFormat(
+  state.settings.language === "ar" ? "ar-IQ" : "en-GB",
+  {hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:state.settings.clockFormat === "12"}
+ ).format(date);
+}
+
+function unwrapPayload(payload) {
+ let current = payload;
+ for (let i = 0; i < 5; i++) {
+  if (!current || typeof current !== "object" || Array.isArray(current)) break;
+  const next = current.data || current.result || current.userData || current.account || current.payload;
+  if (!next || next === current) break;
+  current = next;
+ }
+ return current && typeof current === "object" ? current : {};
+}
+
+function pick(object, keys) {
+ if (!object || typeof object !== "object") return undefined;
+ for (const key of keys) {
+  const value = object[key];
+  if (value !== undefined && value !== null && value !== "") return value;
+ }
+ return undefined;
+}
+
+function normalizeEarthlink(payload) {
+ const d = unwrapPayload(payload);
+ const root = payload && typeof payload === "object" ? payload : {};
+ const all = {...root, ...d};
+
+ return {
+  username: pick(all, ["username","userName","user_name","loginName","accountUsername"]),
+  fullName: pick(all, ["fullName","fullname","name","customerName","accountName"]),
+  userID: pick(all, ["userID","userId","id","accountID","accountId"]),
+  agentName: pick(all, ["agentName","agent","resellerName"]),
+  phone: pick(all, ["phone","phoneNumber","mobile","mobileNumber"]),
+  email: pick(all, ["email","emailAddress"]),
+  city: pick(all, ["city","governorate"]),
+  address: pick(all, ["address","location","area"]),
+  ip: pick(all, ["ip","IP","ipAddress","clientIP","userIP"]),
+  plan: pick(all, ["subscriptionType","accountName","packageName","planName","serviceName"]),
+  price: pick(all, ["accountPrice","price","subscriptionPrice","packagePrice"]),
+  accountStatus: pick(all, ["accountStatus","status","userStatus"]),
+  serviceStatus: pick(all, ["serviceStatus","serviceStatusColor","connectionStatus"]),
+  expiry: pick(all, ["expiryDate","expireDate","expirationDate","endDate","accountExpiry"]),
+  daysLeft: pick(all, ["activeDaysLeft","daysLeft","remainingDays","remainingDaysCount"]),
+  speed: pick(all, ["speed","currentSpeed","downloadSpeed","connectionSpeed"]),
+  usage: pick(all, ["usage","totalUsage","usedGB","consumption","dataUsage"]),
+  download: pick(all, ["download","downloadUsage","downloadGB"]),
+  upload: pick(all, ["upload","uploadUsage","uploadGB"]),
+  frequency: pick(all, ["frequency","signalFrequency","connectionFrequency"]),
+  image: pick(all, ["image","imageUrl","accountImage","profileImage"]),
+  raw: all
+ };
+}
+
+function isOnline(value) {
+ if (value === undefined || value === null) return null;
+ const v = String(value).toLowerCase();
+ if (["green","online","active","connected","1","true","متصل","فعال"].includes(v)) return true;
+ if (["red","offline","disconnected","0","false","غير متصل","منقطع"].includes(v)) return false;
+ return null;
+}
+
+function setConnectionStatus(value) {
+ const online = isOnline(value);
+ const label = online === true ? "Online" : online === false ? "Offline" : "غير معروف";
+ const cls = online === true ? "online" : online === false ? "offline" : "";
+ ["sideDot","heroDot"].forEach(id => {
+  const el = $(id);
+  if (el) el.className = "dot " + cls;
+ });
+ setText("sideConnection", label);
+ setText("heroStatus", label);
+ setText("networkStatus", label);
+ const pill = $("heroStatus");
+ if (pill) pill.style.color = online === true ? "var(--green)" : online === false ? "var(--red)" : "var(--muted)";
+}
+
+function updateRing(days) {
+ const ring = $("expiryRing");
+ const number = Number(days);
+ if (!ring || !Number.isFinite(number) || number < 0) {
+  ring.style.strokeDashoffset = 440;
+  setText("ringDays", "—");
+  return;
+ }
+ const assumedCycle = 30;
+ const fraction = Math.max(0, Math.min(1, number / assumedCycle));
+ ring.style.strokeDashoffset = String(440 - 440 * fraction);
+ setText("ringDays", Math.floor(number));
+}
+
+function renderAccount(data) {
+ state.user = data;
+ const name = data.fullName || data.username || "المشترك";
+
+ setText("welcomeName", name);
+ setText("accountUsername", data.username);
+ setText("statPlan", data.plan);
+ setText("statPrice", data.price);
+ setText("statDays", data.daysLeft);
+ setText("statStatus", data.accountStatus);
+ setText("expiryDate", formatDate(data.expiry));
+ setText("serviceStatus", data.serviceStatus);
+ setText("quickFullName", data.fullName);
+ setText("quickUserID", data.userID);
+ setText("quickAgent", data.agentName);
+
+ setText("accUsername", data.username);
+ setText("accFullName", data.fullName);
+ setText("accUserID", data.userID);
+ setText("accAgent", data.agentName);
+ setText("accPhone", data.phone);
+ setText("accEmail", data.email);
+ setText("accCity", data.city);
+ setText("accAddress", data.address);
+ setText("accIP", data.ip);
+
+ setText("subPlan", data.plan);
+ setText("subPrice", data.price);
+ setText("subStatus", data.accountStatus);
+ setText("subExpiry", formatDate(data.expiry));
+ setText("subDays", data.daysLeft);
+ setText("subService", data.serviceStatus);
+
+ setText("networkIP", data.ip);
+ setText("usageIP", data.ip);
+ setText("networkSpeed", data.speed, "غير متوفر من API");
+ setText("networkUsage", data.usage, "غير متوفر من API");
+ setText("usageTotal", data.usage, "غير متوفر من API");
+ setText("usageDownload", data.download, "غير متوفر من API");
+ setText("usageUpload", data.upload, "غير متوفر من API");
+ setText("usageSpeed", data.speed, "غير متوفر من API");
+ setText("usageFrequency", data.frequency, "غير متوفر من API");
+
+ const days = Number(data.daysLeft);
+ updateRing(Number.isFinite(days) ? days : NaN);
+ setConnectionStatus(data.serviceStatus);
+
+ if (data.image && typeof data.image === "string" && /^https?:\/\//i.test(data.image)) {
+  const img = document.createElement("img");
+  img.src = data.image;
+  img.alt = "Account";
+  img.referrerPolicy = "no-referrer";
+  $("topAvatar").replaceChildren(img.cloneNode());
+  $("heroAvatar").replaceChildren(img);
+ }
+}
+
+async function apiRequest(path, options = {}) {
+ const controller = new AbortController();
+ const timeout = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+ try {
+  const response = await fetch(CONFIG.API_BASE + path, {
+   ...options,
+   credentials: "same-origin",
+   signal: controller.signal,
+   headers: {
+    "Accept":"application/json",
+    ...(options.body ? {"Content-Type":"application/json"} : {}),
+    ...(options.headers || {})
+   }
+  });
+
+  const contentType = response.headers.get("content-type") || "";
+  const result = contentType.includes("application/json")
+   ? await response.json()
+   : {message: await response.text()};
+
+  if (!response.ok) {
+   const message = result.message || result.error || `HTTP ${response.status}`;
+   throw new Error(message);
+  }
+  return result;
+ } finally {
+  clearTimeout(timeout);
+ }
+}
+
+async function login(username, password) {
+ const result = await apiRequest("/api/login", {
+  method:"POST",
+  body:JSON.stringify({username,password})
+ });
+ if (result.authenticated === false) throw new Error(result.message || "تعذر تسجيل الدخول");
+ return result;
+}
+
+async function loadAccount(silent = false) {
+ if (state.busy) return;
+ state.busy = true;
+ $("refreshButton").classList.add("loading");
+ try {
+  const result = await apiRequest("/api/me", {method:"GET"});
+  const source = result.user || result.data || result;
+  const normalized = normalizeEarthlink(source);
+
+  if (!normalized.username && !normalized.fullName && !normalized.userID) {
+   throw new Error("استلم الخادم استجابة، لكن لم يتم العثور على بيانات حساب معروفة.");
+  }
+
+  renderAccount(normalized);
+  state.raw = source;
+  state.lastRefresh = new Date();
+  setText("lastUpdate", "آخر تحديث: " + formatClock(state.lastRefresh));
+  setText("updateClock", formatClock(state.lastRefresh));
+  logHistory("جلب بيانات الحساب", "نجاح");
+  if (!silent) toast("تم تحديث بيانات الحساب من الخادم", "success");
+  return normalized;
+ } catch (error) {
+  logHistory("جلب بيانات الحساب", "فشل: " + error.message);
+  if (!silent) toast("تعذر تحديث البيانات: " + error.message, "error");
+  throw error;
+ } finally {
+  state.busy = false;
+  $("refreshButton").classList.remove("loading");
+ }
+}
+
+function startRefresh() {
+ stopRefresh();
+ const interval = Number(state.settings.refreshInterval) || CONFIG.REFRESH_INTERVAL;
+ state.refreshTimer = setInterval(() => {
+  if (!document.hidden && state.user) loadAccount(true).catch(() => {});
+ }, interval);
+}
+
+function stopRefresh() {
+ if (state.refreshTimer) clearInterval(state.refreshTimer);
+ state.refreshTimer = null;
+}
+
+function showApp() {
+ $("loginScreen").classList.add("hidden");
+ $("appScreen").classList.remove("hidden");
+ startRefresh();
+}
+
+function showLogin() {
+ stopRefresh();
+ state.user = null;
+ $("appScreen").classList.add("hidden");
+ $("loginScreen").classList.remove("hidden");
+ $("password").value = "";
+}
+
+function navigate(page) {
+ const target = $("page-" + page);
+ if (!target) return;
+
+ document.querySelectorAll(".content-section").forEach(el => el.classList.remove("active"));
+ document.querySelectorAll(".nav-item[data-page]").forEach(el => {
+  el.classList.toggle("active", el.dataset.page === page);
+ });
+
+ target.classList.add("active");
+ state.currentPage = page;
+
+ const activeButton = document.querySelector(`.nav-item[data-page="${page}"]`);
+ setText("topTitle", activeButton ? activeButton.textContent.trim() : "EARTHLINK PRO");
+ setText("topSubtitle", "SUBSCRIBER COMMAND CENTER");
+
+ $("sidebar").classList.remove("open");
+ $("mobileOverlay").classList.remove("show");
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function renderHistory() {
+ const body = $("historyRows");
+ body.replaceChildren();
+
+ if (!state.history.length) {
+  const tr = document.createElement("tr");
+  const td = document.createElement("td");
+  td.colSpan = 3;
+  td.className = "empty-row";
+  td.textContent = "لا توجد عمليات مسجلة بعد";
+  tr.appendChild(td);
+  body.appendChild(tr);
+  return;
+ }
+
+ state.history.forEach(item => {
+  const tr = document.createElement("tr");
+  [formatClock(new Date(item.time)),item.action,item.result].forEach(value => {
+   const td = document.createElement("td");
+   td.textContent = value;
+   tr.appendChild(td);
+  });
+  body.appendChild(tr);
+ });
+}
+
+function saveSettings() {
+ state.settings.refreshInterval = Number($("refreshInterval").value);
+ state.settings.clockFormat = $("clockFormat").value;
+ state.settings.language = $("languageSelect").value;
+ state.settings.alertDays = Math.max(0,Math.min(60,Number($("expiryAlertDays").value) || 0));
+ state.settings.inAppNotifications = $("inAppNotifications").value;
+
+ try {
+  localStorage.setItem("earthlink_pro_preferences",JSON.stringify(state.settings));
+ } catch (_) {}
+ startRefresh();
+ toast("تم حفظ الإعدادات على هذا الجهاز", "success");
+}
+
+function loadSettings() {
+ try {
+  const saved = JSON.parse(localStorage.getItem("earthlink_pro_preferences") || "{}");
+  state.settings = {...state.settings,...saved};
+ } catch (_) {}
+
+ $("refreshInterval").value = String(state.settings.refreshInterval);
+ $("clockFormat").value = state.settings.clockFormat;
+ $("languageSelect").value = state.settings.language;
+ $("expiryAlertDays").value = state.settings.alertDays;
+ $("inAppNotifications").value = state.settings.inAppNotifications;
+}
+
+function applyTheme(theme) {
+ const themes = {
+  gold:["#08090b","#d8b46a","#f5f2eb","#99999d"],
+  purple:["#090817","#a879e8","#f4efff","#aaa0bd"],
+  cyan:["#071519","#37c7d4","#e9fcff","#91b4b9"],
+  green:["#07150e","#48c98c","#effff5","#9bb5a5"],
+  red:["#17090b","#e26a72","#fff0f1","#bda0a2"],
+  silver:["#111318","#bdc7d5","#f3f4f6","#a3a8b2"],
+  blue:["#07101e","#5b9bea","#eff6ff","#a1b2ca"],
+  light:["#e9e8e4","#a77b35","#171717","#666666"]
+ };
+ const values = themes[theme] || themes.gold;
+ const root = document.documentElement;
+ root.style.setProperty("--bg",values[0]);
+ root.style.setProperty("--gold",values[1]);
+ root.style.setProperty("--gold2",values[1]);
+ root.style.setProperty("--text",values[2]);
+ root.style.setProperty("--muted",values[3]);
+
+ document.body.classList.toggle("light",theme === "light");
+ document.querySelectorAll(".theme-option").forEach(el =>
+  el.classList.toggle("selected",el.dataset.theme === theme)
+ );
+ try {localStorage.setItem("earthlink_pro_theme",theme)} catch (_) {}
+}
+
+function addNotification(message) {
+ state.notifications.unshift({message,time:new Date()});
+ const list = $("notificationList");
+ list.replaceChildren();
+ state.notifications.forEach(item => {
+  const row = document.createElement("div");
+  row.className = "info-tile";
+  row.style.marginBottom = "9px";
+  const title = document.createElement("strong");
+  title.textContent = item.message;
+  const time = document.createElement("span");
+  time.textContent = formatClock(item.time);
+  row.append(title,time);
+  list.appendChild(row);
+ });
+}
+
+function makeReferenceCode() {
+ const part = Math.random().toString(36).slice(2,7).toUpperCase();
+ return "ELP-" + new Date().toISOString().replace(/\D/g,"").slice(0,12) + "-" + part;
+}
+
+/* Event bindings */
+$("togglePassword").addEventListener("click",() => {
+ const input = $("password");
+ const visible = input.type === "password";
+ input.type = visible ? "text" : "password";
+ $("togglePassword").innerHTML = visible
+  ? '<i class="fa-regular fa-eye-slash"></i>'
+  : '<i class="fa-regular fa-eye"></i>';
+});
+
+$("loginForm").addEventListener("submit",async event => {
+ event.preventDefault();
+ const username = $("username").value.trim();
+ const password = $("password").value;
+ const error = $("loginError");
+ const button = $("loginButton");
+
+ error.textContent = "";
+ button.classList.add("loading");
+ button.disabled = true;
+
+ try {
+  await login(username,password);
+  showApp();
+  await loadAccount(false);
+  toast("تم تسجيل الدخول بنجاح", "success");
+ } catch (err) {
+  error.textContent = err.message || "فشل تسجيل الدخول";
+  toast("تعذر تسجيل الدخول", "error");
+ } finally {
+  button.classList.remove("loading");
+  button.disabled = false;
+ }
+});
+
+document.querySelectorAll(".nav-item[data-page]").forEach(button => {
+ button.addEventListener("click",() => navigate(button.dataset.page));
+});
+
+document.querySelectorAll("[data-go]").forEach(button => {
+ button.addEventListener("click",() => navigate(button.dataset.go));
+});
+
+$("menuToggle").addEventListener("click",() => {
+ $("sidebar").classList.toggle("open");
+ $("mobileOverlay").classList.toggle("show");
+});
+$("mobileOverlay").addEventListener("click",() => {
+ $("sidebar").classList.remove("open");
+ $("mobileOverlay").classList.remove("show");
+});
+
+$("refreshButton").addEventListener("click",() => loadAccount(false).catch(() => {}));
+$("notificationButton").addEventListener("click",() => navigate("notifications"));
+
+$("themeToggle").addEventListener("click",() => {
+ const isLight = document.body.classList.contains("light");
+ applyTheme(isLight ? "gold" : "light");
+ $("themeToggle").innerHTML = isLight
+  ? '<i class="fa-regular fa-moon"></i>'
+  : '<i class="fa-regular fa-sun"></i>';
+});
+
+document.querySelectorAll(".theme-option").forEach(button => {
+ button.addEventListener("click",() => applyTheme(button.dataset.theme));
+});
+
+$("saveSettings").addEventListener("click",saveSettings);
+$("saveNotificationSettings").addEventListener("click",() => {
+ saveSettings();
+ toast("تم حفظ إعدادات الإشعارات", "success");
+});
+
+$("clearHistory").addEventListener("click",() => {
+ state.history = [];
+ renderHistory();
+ toast("تم مسح سجل العمليات المحلي");
+});
+
+$("logoutButton").addEventListener("click",async () => {
+ try {
+  await apiRequest("/api/logout",{method:"POST"});
+ } catch (_) {}
+ showLogin();
+ toast("تم تسجيل الخروج");
+});
+
+$("contactForm").addEventListener("submit",event => {
+ event.preventDefault();
+ const name = $("contactName").value.trim();
+ const type = $("contactType").value;
+ const message = $("contactMessage").value.trim();
+ if (!name || !message) return;
+
+ const code = makeReferenceCode();
+ const timestamp = new Date().toLocaleString("ar-IQ");
+ $("contactResult").textContent =
+  `تم إنشاء الطلب محلياً — الرقم المرجعي: ${code} — ${timestamp}`;
+
+ const report = [
+  "EARTHLINK PRO SUPPORT REQUEST",
+  "Reference: " + code,
+  "Name: " + name,
+  "Type: " + type,
+  "Date: " + timestamp,
+  "Message: " + message
+ ].join("\n");
+
+ if (navigator.clipboard && navigator.clipboard.writeText) {
+  navigator.clipboard.writeText(report).then(
+   () => toast("تم نسخ تفاصيل الطلب والرقم المرجعي","success"),
+   () => toast("تم إنشاء رقم الطلب، لكن تعذر النسخ")
+  );
+ } else {
+  toast("تم إنشاء رقم الطلب المرجعي");
+ }
+ addNotification("تم إنشاء طلب دعم " + code);
+ $("contactForm").reset();
+});
+
+$("closeModal").addEventListener("click",() => $("confirmModal").classList.remove("show"));
+$("cancelModal").addEventListener("click",() => $("confirmModal").classList.remove("show"));
+
+document.addEventListener("visibilitychange",() => {
+ if (!document.hidden && state.user) {
+  loadAccount(true).catch(() => {});
+ }
+});
+
+window.addEventListener("online",() => toast("عاد اتصال الجهاز بالإنترنت","success"));
+window.addEventListener("offline",() => toast("انقطع اتصال الجهاز بالإنترنت","error"));
+
+/* Initialization */
+loadSettings();
+renderHistory();
+
+try {
+ const savedTheme = localStorage.getItem("earthlink_pro_theme") || "gold";
+ applyTheme(savedTheme);
+} catch (_) {
+ applyTheme("gold");
+}
+
+/* لا نفترض وجود جلسة محفوظة: الخادم هو من يقرر ذلك. */
+apiRequest("/api/me",{method:"GET"})
+ .then(result => {
+  if (result && result.authenticated === false) return;
+  const source = result.user || result.data || result;
+  const data = normalizeEarthlink(source);
+  if (data.username || data.fullName || data.userID) {
+   renderAccount(data);
+   showApp();
+   logHistory("استعادة جلسة الحساب","نجاح");
+  }
+ })
+ .catch(() => {
+  /* بقاء شاشة الدخول عند عدم وجود جلسة صالحة */
+ });
+</script>
+</body>
+</html>

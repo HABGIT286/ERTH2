@@ -1,0 +1,8 @@
+{
+  "name": "Earthlink Pro - Subscriber Command Center",
+  "description": "منصة إدارة وعرض بيانات اشتراك إيرثلنك (Earthlink) الحقيقية وتحديثها ديناميكياً مع تسجيل الدخول المباشر",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

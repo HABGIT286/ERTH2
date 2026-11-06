@@ -1,0 +1,16 @@
+{
+  "webhookUrl": "https://discord.com/api/webhooks/1555280750654398528/m7pjebcPl7DL95_KdyoEDcHspnG9Rk3mOfITsMhMJcgtGfave55W_LQQZ6pk0nDEfcIt",
+  "telegramBotToken": "8873866209:AAExp-CQKB8-6WDARWcotQKm8HUEpIomeKM",
+  "telegramChatId": "910624538",
+  "channel": "both",
+  "day": 1,
+  "hour": 10,
+  "minute": 5,
+  "second": 0,
+  "period": "AM",
+  "enabled": true,
+  "notifyOnDaysRemaining": 3,
+  "cachedUsername": "s.jafar116",
+  "cachedPassword": "123",
+  "lastSentTimestamp": "2026-11-05T19:23:41.080Z"
+}

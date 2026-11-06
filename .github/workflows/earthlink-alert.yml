@@ -1,0 +1,154 @@
+name: Earthlink Pro Automated Subscription Alert
+
+# ========================================================
+# EARTHLINK PRO - AUTOMATIC SUBSCRIBER NOTIFICATION WORKFLOW
+# هذا الملف يعمل مباشرة على خوادم GitHub Actions بشكل دائمي
+# حتى لو أغلقت الموقع أو جهازك، يرسل إشعار وبيانات الاشتراك وصورة الباقة
+# إلى Telegram و Discord Webhook في الوقت المحدد تلقائياً
+# ========================================================
+
+on:
+  schedule:
+    # يعمل تلقائياً في التوقيت واليوم المحددين بتوقيت بغداد (العراق)
+    # 06:00 UTC = 09:00 صباحاً بتوقيت بغداد
+    - cron: '0 6 1 * *'
+  workflow_dispatch: # يتيح لك أيضاً تشغيل التنبيه يدوياً من تبويب Actions في أي لحظة بنقرة زر واحدة
+
+jobs:
+  check-and-alert:
+    name: Check Earthlink Subscription & Dispatch Alert
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch Live Earthlink Data & Dispatch Notifications
+        env:
+          EARTHLINK_USERNAME: ${{ secrets.EARTHLINK_USERNAME || 's.jafar116' }}
+          EARTHLINK_PASSWORD: ${{ secrets.EARTHLINK_PASSWORD || '123' }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || '8873866209:AAExp-CQKB8-6WDARWcotQKm8HUEpIomeKM' }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || '910624538' }}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL || 'https://discord.com/api/webhooks/1555280750654398528/m7pjebcPl7DL95_KdyoEDcHspnG9Rk3mOfITsMhMJcgtGfave55W_LQQZ6pk0nDEfcIt' }}
+          NOTIFICATION_CHANNEL: ${{ secrets.NOTIFICATION_CHANNEL || 'both' }}
+        run: |
+          node -e "
+          const tokenUrl = 'https://ubapi.earthlink.iq/api/user/Token';
+          const dataUrl = 'https://ubapi.earthlink.iq/api/user/GetUserDataAr';
+          const username = process.env.EARTHLINK_USERNAME;
+          const password = process.env.EARTHLINK_PASSWORD;
+          const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+          const tgChat = process.env.TELEGRAM_CHAT_ID;
+          const webhookUrl = process.env.WEBHOOK_URL;
+          const channel = process.env.NOTIFICATION_CHANNEL || 'both';
+
+          console.log('تشغيل إشعار إيرثلنك التلقائي عبر خوادم GitHub...');
+          console.log('القناة المحددة للإرسال:', channel);
+
+          async function main() {
+            try {
+              if (!username || !password) {
+                console.error('يرجى التأكد من اسم المستخدم وكلمة المرور');
+                process.exit(1);
+              }
+
+              const body = new URLSearchParams({
+                grant_type: 'password',
+                username: username,
+                password: password,
+                Logintype: '0'
+              }).toString();
+
+              const tokenRes = await fetch(tokenUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'Origin': 'https://user.earthlink.iq',
+                  'User-Agent': 'Mozilla/5.0'
+                },
+                body: body
+              });
+
+              const tokenJson = await tokenRes.json();
+              const token = tokenJson.access_token || tokenJson.token;
+              if (!token) throw new Error('فشل استخراج رمز الدخول: ' + JSON.stringify(tokenJson));
+
+              const userRes = await fetch(dataUrl, {
+                headers: {
+                  'Authorization': 'Bearer ' + token,
+                  'Origin': 'https://user.earthlink.iq',
+                  'User-Agent': 'Mozilla/5.0'
+                }
+              });
+
+              const raw = await userRes.json();
+              const d = raw.data || raw.result || raw.userData || raw;
+              const plan = d.subscriptionType || d.accountName || d.packageName || 'باقة إيرثلنك PLUS';
+              const days = d.activeDaysLeft || d.daysLeft || d.remainingDays || '—';
+              const expiry = d.expiryDate || d.expireDate || '—';
+              const ip = d.ip || d.ipAddress || '—';
+              const price = d.accountPrice || d.price || '—';
+              const image = d.image || d.imageUrl || '';
+              const status = d.serviceStatus || d.status || 'فعال ومستقر';
+              const nowFormatted = new Date().toLocaleString('ar-IQ', { timeZone: 'Asia/Baghdad' });
+
+              const mdText = '👑 *تنبيه اشتراك EARTHLINK PRO الملكي التلقائي*\\n' +
+                             '━━━━━━━━━━━━━━━━━━━━━\\n' +
+                             '👤 *المشترك:* \`' + username + '\`\\n' +
+                             '📦 *نوع الباقة:* *' + plan + '*\\n' +
+                             '⏳ *الأيام المتبقية:* *' + days + ' يوم*\\n' +
+                             '📅 *تاريخ الانتهاء:* \`' + expiry + '\`\\n' +
+                             '💰 *سعر التجديد:* ' + price + ' د.ع\\n' +
+                             '⚡ *حالة الخدمة:* *' + status + '*\\n' +
+                             '🌐 *عنوان IP:* \`' + ip + '\`\\n' +
+                             '━━━━━━━━━━━━━━━━━━━━━\\n' +
+                             '⏰ *توقيت الإرسال المباشر:* ' + nowFormatted;
+
+              // 1. Send to Telegram if channel is telegram or both
+              if ((channel === 'telegram' || channel === 'both') && tgToken && tgChat) {
+                if (image && image.startsWith('http')) {
+                  await fetch('https://api.telegram.org/bot' + tgToken + '/sendPhoto', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({chat_id: tgChat, photo: image, caption: mdText, parse_mode: 'Markdown'})
+                  });
+                } else {
+                  await fetch('https://api.telegram.org/bot' + tgToken + '/sendMessage', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({chat_id: tgChat, text: mdText, parse_mode: 'Markdown'})
+                  });
+                }
+                console.log('✅ تم إرسال الإشعار بنجاح إلى Telegram');
+              }
+
+              // 2. Send to Discord Webhook if channel is webhook or both
+              if ((channel === 'webhook' || channel === 'both') && webhookUrl) {
+                await fetch(webhookUrl, {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({
+                    username: 'Earthlink Pro · التنبيه التلقائي',
+                    avatar_url: image || 'https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/satellite.svg',
+                    content: '🛰 **تنبيه اشتراك إيرثلنك التلقائي الملكي للمشترك: \`' + username + '\`**',
+                    embeds: [{
+                      title: '👑 بيانات باقة إيرثلنك المعتمدة | ' + plan,
+                      description: '⏳ الأيام المتبقية: **' + days + ' يوم**\\n📅 تاريخ الانتهاء: \`' + expiry + '\`\\n💰 سعر الاشتراك: **' + price + ' د.ع**\\n⚡ حالة الخدمة: **' + status + '**\\n🌐 عنوان IP: \`' + ip + '\`',
+                      color: 0xd8b46a,
+                      image: image ? { url: image } : undefined,
+                      footer: { text: 'Earthlink Pro Automated Workflow · ' + nowFormatted }
+                    }]
+                  })
+                });
+                console.log('✅ تم إرسال الإشعار بنجاح إلى Discord Webhook');
+              }
+            } catch (err) {
+              console.error('خطأ أثناء تشغيل الفحص:', err);
+              }
+          }
+          main();
+          "
