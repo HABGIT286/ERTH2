@@ -10,74 +10,119 @@ permissions:
   contents: read
 
 concurrency:
-  group: earthlink-start
+  group: earthlink-pro
   cancel-in-progress: true
 
 jobs:
   build-and-start:
+    name: Build and Run EARTHLINK PRO
     runs-on: ubuntu-24.04
     timeout-minutes: 350
 
     steps:
-      - name: Checkout Project
+      # 1. تحميل المستودع
+      - name: Checkout Repository
         uses: actions/checkout@v5
 
+      # 2. إعداد Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
           node-version: 22
 
-      - name: Fix Dependencies
+      # 3. إعداد Bun
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      # 4. التحقق من هيكل المشروع
+      - name: Verify Project Structure
         run: |
-          npm pkg set 'devDependencies.esbuild=^0.28.2'
-          npm install --no-audit --no-fund
+          test -f package.json
+          test -f bun.lock
+          test -f index.html
+          test -f server.ts
+          test -f vite.config.ts
+          test -f src/App.tsx
+          test -f src/main.tsx
+          test -f src/index.css
+          test -d public/assets/aistudio
+          test -f .github/workflows/earthlink-alert.yml
 
-      - name: Build Website
-        run: npx vite build --base=/
+          echo "Project structure verified"
 
+      # 5. تحديث esbuild وحل تعارض Vite
+      - name: Fix Build Dependencies
+        run: |
+          bun add --dev esbuild@^0.28.2
+
+      # 6. تثبيت المكتبات
+      - name: Install Dependencies
+        run: |
+          bun install --frozen-lockfile
+
+      # 7. بناء واجهة React و Vite
+      - name: Build Frontend
+        run: |
+          bun run vite build --base=/
+
+      # 8. بناء السيرفر مع إبقاء المكتبات خارج التجميع
       - name: Build Backend
         run: |
-          npx esbuild server.ts \
+          bun run esbuild server.ts \
             --platform=node \
             --bundle \
             --format=esm \
-            --outfile=server.js \
-            --external:vite
+            --packages=external \
+            --outfile=server.js
 
+      # 9. التحقق من البناء
       - name: Verify Build
         run: |
           test -f dist/index.html
           test -f server.js
-          echo "Build files verified successfully"
+          echo "Frontend and backend are ready"
 
+      # 10. تشغيل السيرفر من جذر المشروع
       - name: Start Server
         run: |
           NODE_ENV=production PORT=3000 node server.js > server.log 2>&1 &
           echo $! > server.pid
 
+          sleep 3
+
+          if ! kill -0 "$(cat server.pid)" 2>/dev/null; then
+            cat server.log
+            exit 1
+          fi
+
+      # 11. فحص API
       - name: Test Backend
         run: |
           for i in {1..30}; do
             if curl -fsS http://127.0.0.1:3000/api/status; then
-              echo "Backend is running successfully"
-              break
-            fi
-
-            if [ "$i" -eq 30 ]; then
-              echo "Backend failed to start"
-              cat server.log
-              exit 1
+              echo "Backend API is working"
+              exit 0
             fi
 
             sleep 2
           done
 
+          echo "Backend failed"
+          cat server.log
+          exit 1
+
+      # 12. فحص الموقع
       - name: Test Website
         run: |
-          curl --fail --show-error http://127.0.0.1:3000/ -o homepage.html
-          grep -qi "EARTHLINK PRO" homepage.html
-          echo "Website is responding successfully"
+          curl --fail --show-error \
+            http://127.0.0.1:3000/ \
+            -o homepage.html
 
+          grep -qi "EARTHLINK PRO" homepage.html
+
+          echo "Website is working"
+
+      # 13. إبقاء العملية مستمرة أثناء المهمة
       - name: Keep Server Alive
         run: |
           PID=$(cat server.pid)
@@ -90,10 +135,11 @@ jobs:
           cat server.log
           exit 1
 
-      - name: Save Error Logs
+      # 14. حفظ سجلات التشغيل
+      - name: Upload Server Logs
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: earthlink-server-logs
+          name: earthlink-pro-logs
           path: server.log
           if-no-files-found: ignore
