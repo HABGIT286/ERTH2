@@ -1,0 +1,99 @@
+
+name: EARTHLINK PRO - Build and Start
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: earthlink-start
+  cancel-in-progress: true
+
+jobs:
+  build-and-start:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - name: Checkout All Project Files
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Project Dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build Website
+        run: npx vite build --base=/
+
+      - name: Build Backend Server
+        run: |
+          npx esbuild server.ts \
+            --platform=node \
+            --bundle \
+            --format=esm \
+            --outfile=dist/server.js \
+            --external:vite
+
+      - name: Verify Build Files
+        run: |
+          test -f dist/index.html
+          test -f dist/server.js
+          echo "Website and backend build files verified"
+
+      - name: Start Production Server
+        run: |
+          NODE_ENV=production PORT=3000 node dist/server.js > server.log 2>&1 &
+          echo $! > server.pid
+
+      - name: Test Server and Website
+        run: |
+          SUCCESS=0
+
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3000/api/status; then
+              SUCCESS=1
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "$SUCCESS" -ne 1 ]; then
+            cat server.log
+            exit 1
+          fi
+
+          echo "Backend API is responding"
+
+          curl -fsS http://127.0.0.1:3000/ -o homepage.html
+          grep -qi "EARTHLINK PRO" homepage.html
+
+          echo "Website homepage is responding"
+
+      - name: Keep Server Running
+        run: |
+          PID=$(cat server.pid)
+
+          while kill -0 "$PID" 2>/dev/null; do
+            sleep 30
+          done
+
+          echo "Server process stopped unexpectedly"
+          cat server.log
+          exit 1
+
+      - name: Upload Server Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: earthlink-server-logs
+          path: server.log
+          if-no-files-found: ignore
