@@ -27,8 +27,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install Dependencies
-        run: npm install --no-audit --no-fund
+      - name: Fix Dependencies
+        run: |
+          npm pkg set 'devDependencies.esbuild=^0.28.2'
+          npm install --no-audit --no-fund
 
       - name: Build Website
         run: npx vite build --base=/
