@@ -16,69 +16,68 @@ concurrency:
 
 jobs:
   build-and-start:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 350
 
     steps:
-      - name: Checkout All Project Files
-        uses: actions/checkout@v4
+      - name: Checkout Project
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install Project Dependencies
+      - name: Install Dependencies
         run: npm install --no-audit --no-fund
 
       - name: Build Website
         run: npx vite build --base=/
 
-      - name: Build Backend Server
+      - name: Build Backend
         run: |
           npx esbuild server.ts \
             --platform=node \
             --bundle \
             --format=esm \
-            --outfile=dist/server.js \
+            --outfile=server.js \
             --external:vite
 
-      - name: Verify Build Files
+      - name: Verify Build
         run: |
           test -f dist/index.html
-          test -f dist/server.js
-          echo "Website and backend build files verified"
+          test -f server.js
+          echo "Build files verified"
 
-      - name: Start Production Server
+      - name: Start Server
         run: |
-          NODE_ENV=production PORT=3000 node dist/server.js > server.log 2>&1 &
+          NODE_ENV=production PORT=3000 node server.js > server.log 2>&1 &
           echo $! > server.pid
 
-      - name: Test Server and Website
+      - name: Test Backend
         run: |
-          SUCCESS=0
-
           for i in {1..30}; do
             if curl -fsS http://127.0.0.1:3000/api/status; then
-              SUCCESS=1
+              echo "Backend is running"
               break
             fi
+
+            if [ "$i" -eq 30 ]; then
+              cat server.log
+              exit 1
+            fi
+
             sleep 2
           done
 
-          if [ "$SUCCESS" -ne 1 ]; then
-            cat server.log
-            exit 1
-          fi
-
-          echo "Backend API is responding"
-
-          curl -fsS http://127.0.0.1:3000/ -o homepage.html
+      - name: Test Website
+        run: |
+          curl --fail --show-error http://127.0.0.1:3000/ -o homepage.html
           grep -qi "EARTHLINK PRO" homepage.html
+          echo "Website is responding successfully"
 
-          echo "Website homepage is responding"
-
-      - name: Keep Server Running
+      - name: Keep Server Alive
         run: |
           PID=$(cat server.pid)
 
@@ -86,13 +85,12 @@ jobs:
             sleep 30
           done
 
-          echo "Server process stopped unexpectedly"
           cat server.log
           exit 1
 
-      - name: Upload Server Logs
+      - name: Save Error Logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: earthlink-server-logs
           path: server.log
