@@ -1,4 +1,3 @@
-
 name: EARTHLINK PRO - Build and Start
 
 on:
@@ -27,7 +26,6 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: npm
 
       - name: Install Dependencies
         run: npm install --no-audit --no-fund
@@ -48,7 +46,7 @@ jobs:
         run: |
           test -f dist/index.html
           test -f server.js
-          echo "Build files verified"
+          echo "Build files verified successfully"
 
       - name: Start Server
         run: |
@@ -59,11 +57,12 @@ jobs:
         run: |
           for i in {1..30}; do
             if curl -fsS http://127.0.0.1:3000/api/status; then
-              echo "Backend is running"
+              echo "Backend is running successfully"
               break
             fi
 
             if [ "$i" -eq 30 ]; then
+              echo "Backend failed to start"
               cat server.log
               exit 1
             fi
@@ -85,6 +84,7 @@ jobs:
             sleep 30
           done
 
+          echo "Server stopped unexpectedly"
           cat server.log
           exit 1
 
